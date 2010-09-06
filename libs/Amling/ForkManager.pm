@@ -8,6 +8,7 @@ use Time::HiRes ('time');
 use POSIX (':sys_wait_h');
 
 # TODO: allow stdout/stdin close/noclose
+# TODO: error handling (on_error which can decide halt, result, etc.)
 
 sub new
 {
