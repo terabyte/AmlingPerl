@@ -115,8 +115,8 @@ sub _maybe_spawn
         $this->child_shutdown();
 
 #print STDERR "Starting child for $id\n";
-        my $result = $subref->($id, @$args);
-        my $result_storn = freeze([$result]);
+        my @result = $subref->($id, @$args);
+        my $result_storn = freeze([@result]);
 
         print $wh $result_storn;
 
@@ -246,9 +246,9 @@ sub wait_subset
             else
             {
                 my $result_storn = $in_flight->{'BUFFER'};
-                my ($result) = @{thaw($result_storn)};
+                my @result = @{thaw($result_storn)};
 
-                my $munged_result = $this->{'ON_RESULT'}->($this, $in_flight->{'ID'}, $result);
+                my $munged_result = $this->{'ON_RESULT'}->($this, $in_flight->{'ID'}, @result);
                 $this->{'RESULTS'}->{$in_flight->{'ID'}} = $munged_result;
 
                 close $in_flight->{'RH'};
