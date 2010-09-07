@@ -69,7 +69,7 @@ sub check_flush
     else
     {
         my $sz = 0;
-        for my $e (@command, @args)
+        for my $e (@{build_command()})
         {
             $sz += length($e);
         }
@@ -83,8 +83,14 @@ sub check_flush
 
 sub force_flush
 {
-    do_run([@args]);
+    my $args = build_command();
+    do_run($args);
     @args = ();
+}
+
+sub build_command
+{
+    return [@command, @args];
 }
 
 sub do_run
@@ -92,22 +98,22 @@ sub do_run
     my $args = shift;
     if($print_stdout)
     {
-        print "Starting: " . join(" ", @command, @$args) . "\n";
+        print "Starting: " . join(" ", @$args) . "\n";
     }
     if($print_stderr)
     {
-        print STDERR "Starting: " . join(" ", @command, @$args) . "\n";
+        print STDERR "Starting: " . join(" ", @$args) . "\n";
     }
 
-    system(@command, @$args);
+    system(@$args);
 
     if($print_stdout)
     {
-        print "Finished: " . join(" ", @command, @$args) . "\n";
+        print "Finished: " . join(" ", @$args) . "\n";
     }
     if($print_stderr)
     {
-        print STDERR "Finished: " . join(" ", @command, @$args) . "\n";
+        print STDERR "Finished: " . join(" ", @$args) . "\n";
     }
 }
 
