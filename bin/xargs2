@@ -84,7 +84,9 @@ sub check_flush
 sub force_flush
 {
     my $args = build_command();
+    note("Starting", $args);
     do_run($args);
+    note("Finished", $args);
     @args = ();
 }
 
@@ -112,9 +114,7 @@ sub do_run
 {
     my $args = shift;
 
-    note("Starting", $args);
     system(@$args);
-    note("Finished", $args);
 }
 
 sub usage
