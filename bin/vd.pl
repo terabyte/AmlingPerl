@@ -1,0 +1,82 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+my $display = 0;
+my $display_string = "   ";
+my @f;
+while(@ARGV)
+{
+   my $f = shift @ARGV;
+   if($f eq "-d")
+   {
+      $display = 1;
+   }
+   elsif($f eq "-ds")
+   {
+      $display = 1;
+      $display_string = shift @ARGV;
+   }
+   else
+   {
+      unshift @f, $f;
+   }
+}
+
+my %h = ();
+foreach my $f (@f)
+{
+   @ARGV = ($f);
+   while(<>)
+   {
+      chomp;
+      if(!exists($h{$_}))
+      {
+         $h{$_} = {};
+      }
+      $h{$_}->{$f} = "";
+   }
+}
+
+my %h2 = ();
+
+foreach my $k (keys(%h))
+{
+   my $v = join(", ", sort(keys(%{$h{$k}})));
+
+   if(!exists($h2{$v}))
+   {
+      $h2{$v} = [];
+   }
+   push @{$h2{$v}}, $k;
+}
+
+foreach my $k (sort(keys(%h2)))
+{
+   print "In " . $k . ": " . scalar(@{$h2{$k}}) . "\n";
+   if($display)
+   {
+      foreach(@{$h2{$k}})
+      {
+         print $display_string . $_ . "\n";
+      }
+   }
+}
