@@ -28,6 +28,9 @@ my $arg_limit;
 my $parallel_limit;
 my $print_stdout = 0;
 my $print_stderr = 0;
+my @before_arg;
+my @after_arg;
+my @after_cmd;
 
 my @options =
 (
@@ -35,6 +38,9 @@ my @options =
     "n=i"          => \$arg_limit,
     "v!"           => \$print_stdout,
     "V!"           => \$print_stderr,
+    "before-arg=s" => \@before_arg,
+    "after-arg=s"  => \@after_arg,
+    "after-cmd=s"  => \@after_cmd,
     "help!"        => sub { usage(0); },
 );
 
@@ -124,7 +130,7 @@ sub force_flush
 
 sub build_command
 {
-    return [@command, @args];
+    return [@command, (map { @before_arg, $_, @after_arg } @args), @after_cmd];
 }
 
 sub note
@@ -212,8 +218,11 @@ sub usage
 Usage: $0 <options> <command>
    {-j | --parallel} <int>   Run this many executions in parallel.
    -n                        Run exactly this many commands in each execution.
-   -v                        Print commands to STDOUT as they're started.
-   -V                        Print commands to STDERR as they're started.
+   -v                        Print sentinels to STDOUT.
+   -V                        Print sentinels to STDERR.
+   --before-arg <str>        Add this extra argument before every argument read from STDIN.
+   --after-arg <str>         Add this extra argument after every argument read from STDIN.
+   --after-cmd <str>         Add this extra argument on the end of every command.
    --help                    Print this help.
 EOF
 
