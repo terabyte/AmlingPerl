@@ -30,14 +30,16 @@ sub new
     my $class = shift;
     my %args = @_;
 
-    my $on_fork = _default_arg(delete($args{"on_fork"}), sub {});
+    my $before_fork = _default_arg(delete($args{"before_fork"}), sub {});
+    my $after_fork = _default_arg(delete($args{"after_fork"}), sub {});
     my $on_result = _default_arg(delete($args{"on_result"}), \&_default_on_result);
     my $limit = _default_arg(delete($args{"limit"}), -1);
     my $comparator = delete($args{"comparator"});
 
     my $this =
     {
-        'ON_FORK' => $on_fork,
+        'BEFORE_FORK' => $before_fork,
+        'AFTER_FORK' => $after_fork,
         'ON_RESULT' => $on_result,
         'LIMIT' => $limit,
         'COMPARATOR' => $comparator,
@@ -99,6 +101,8 @@ sub _maybe_spawn
 
     my ($id, $subref, $args) = @{shift @$queue};
 
+    $this->{'BEFORE_FORK'}->($this, $id, $subref, @$args);
+
     my ($rh, $wh);
 
     pipe $rh, $wh;
@@ -135,8 +139,8 @@ sub child_shutdown
 {
     my $this = shift;
 
-    # give ON_FORK first crack at it
-    $this->{'ON_FORK'}->();
+    # give AFTER_FORK first crack at it
+    $this->{'AFTER_FORK'}->();
 
     {
         for my $in_flight (@{$this->{'IN_FLIGHT'}})
