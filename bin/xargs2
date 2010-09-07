@@ -93,28 +93,28 @@ sub build_command
     return [@command, @args];
 }
 
+sub note
+{
+    my $header = shift;
+    my $args = shift;
+
+    if($print_stdout)
+    {
+        print "$header: " . join(" ", @$args) . "\n";
+    }
+    if($print_stderr)
+    {
+        print STDERR "$header: " . join(" ", @$args) . "\n";
+    }
+}
+
 sub do_run
 {
     my $args = shift;
-    if($print_stdout)
-    {
-        print "Starting: " . join(" ", @$args) . "\n";
-    }
-    if($print_stderr)
-    {
-        print STDERR "Starting: " . join(" ", @$args) . "\n";
-    }
 
+    note("Starting", $args);
     system(@$args);
-
-    if($print_stdout)
-    {
-        print "Finished: " . join(" ", @$args) . "\n";
-    }
-    if($print_stderr)
-    {
-        print STDERR "Finished: " . join(" ", @$args) . "\n";
-    }
+    note("Finished", $args);
 }
 
 sub usage
