@@ -21,6 +21,7 @@ use strict;
 use warnings;
 
 use Amling::ForkManager;
+use File::Temp ('tempdir');
 use Getopt::Long;
 
 my $arg_limit;
@@ -42,6 +43,25 @@ Getopt::Long::Configure('require_order');
 
 GetOptions(@options) || usage(1);
 
+my $fm;
+my $tempdir;
+my $next_id = 0;
+if(defined($parallel_limit))
+{
+    my %args;
+
+    if($parallel_limit != -1)
+    {
+        $args{'limit'} = $parallel_limit;
+    }
+
+    $args{'on_result'} = \&on_result;
+    $args{'before_fork'} = \&before_fork;
+
+    $fm = Amling::ForkManager->new(%args);
+    $tempdir = tempdir('CLEANUP' => 1);
+}
+
 my @command = @ARGV;
 @ARGV = ();
 
@@ -55,6 +75,11 @@ while(my $line = <>)
 if(@args)
 {
     force_flush();
+}
+
+if(defined($fm))
+{
+    $fm->wait_all();
 }
 
 sub check_flush
@@ -84,9 +109,16 @@ sub check_flush
 sub force_flush
 {
     my $args = build_command();
-    note("Starting", $args);
-    do_run($args);
-    note("Finished", $args);
+    if(defined($fm))
+    {
+        $fm->add_job($next_id++, \&child, [$args]);
+    }
+    else
+    {
+        note("Starting", $args);
+        do_run($args);
+        note("Finished", $args);
+    }
     @args = ();
 }
 
@@ -115,6 +147,68 @@ sub do_run
     my $args = shift;
 
     system(@$args);
+}
+
+sub child
+{
+    my $id = shift;
+    my $args = shift;
+
+    open(STDOUT, ">", "$tempdir/$id.out");
+    open(STDERR, ">", "$tempdir/$id.err");
+
+    do_run($args);
+
+    return $args;
+}
+
+sub before_fork
+{
+    my $fm = shift;
+    my $id = shift;
+    my $subref = shift;
+    my $args = shift;
+
+    note("Starting child", $args);
+}
+
+sub on_result
+{
+    my $fm = shift;
+    my $id = shift;
+    my $args = shift;
+
+    note("Outputting", $args);
+
+    {
+        my $fh;
+        if(open($fh, "<", "$tempdir/$id.out"))
+        {
+            while(my $line = <$fh>)
+            {
+                print $line;
+            }
+            close($fh);
+        }
+
+        unlink("$tempdir/$id.out");
+    }
+
+    {
+        my $fh;
+        if(open($fh, "<", "$tempdir/$id.err"))
+        {
+            while(my $line = <$fh>)
+            {
+                print STDERR $line;
+            }
+            close($fh);
+        }
+
+        unlink("$tempdir/$id.err");
+    }
+
+    note("Finished", $args);
 }
 
 sub usage
