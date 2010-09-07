@@ -116,7 +116,7 @@ sub force_flush
     else
     {
         note("Starting", $args);
-        do_run($args);
+        system(@$args);
         note("Finished", $args);
     }
     @args = ();
@@ -142,13 +142,6 @@ sub note
     }
 }
 
-sub do_run
-{
-    my $args = shift;
-
-    system(@$args);
-}
-
 sub child
 {
     my $id = shift;
@@ -157,7 +150,7 @@ sub child
     open(STDOUT, ">", "$tempdir/$id.out");
     open(STDERR, ">", "$tempdir/$id.err");
 
-    do_run($args);
+    system(@$args);
 
     return $args;
 }
