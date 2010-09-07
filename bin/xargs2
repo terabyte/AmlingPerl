@@ -34,12 +34,13 @@ my @options =
     "n=i"          => \$arg_limit,
     "v!"           => \$print_stdout,
     "V!"           => \$print_stderr,
+    "help!"        => sub { usage(0); },
 );
 
 # to not slurp options from the command
 Getopt::Long::Configure('require_order');
 
-GetOptions(@options) || usage();
+GetOptions(@options) || usage(1);
 
 my @command = @ARGV;
 @ARGV = ();
@@ -112,11 +113,16 @@ sub do_run
 
 sub usage
 {
+    my $ec = shift;
+
     print <<EOF;
 Usage: $0 <options> <command>
    {-j | --parallel} <int>   Run this many executions in parallel.
    -n                        Run exactly this many commands in each execution.
    -v                        Print commands to STDOUT as they're started.
    -V                        Print commands to STDERR as they're started.
+   --help                    Print this help.
 EOF
+
+    exit $ec;
 }
