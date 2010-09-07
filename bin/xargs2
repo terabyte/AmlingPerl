@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Amling::ForkManager;
+use Getopt::Long;
+
+my $arg_limit;
+my $parallel_limit;
+my $print_stdout = 0;
+my $print_stderr = 0;
+
+my @options =
+(
+    "j|parallel=i" => \$parallel_limit,
+    "n=i"          => \$arg_limit,
+    "v!"           => \$print_stdout,
+    "V!"           => \$print_stderr,
+);
+
+# to not slurp options from the command
+Getopt::Long::Configure('require_order');
+
+GetOptions(@options) || usage();
+
+my @command = @ARGV;
+@ARGV = ();
+
+my @args = ();
+while(my $line = <>)
+{
+    chomp $line;
+    push @args, $line;
+    check_flush();
+}
+if(@args)
+{
+    force_flush();
+}
+
+sub check_flush
+{
+    if(defined($arg_limit))
+    {
+        if(@args == $arg_limit)
+        {
+            force_flush();
+        }
+    }
+    else
+    {
+        my $sz = 0;
+        for my $e (@command, @args)
+        {
+            $sz += length($e);
+        }
+        # TODO: configurable
+        if($sz > 10000)
+        {
+            force_flush()
+        }
+    }
+}
+
+sub force_flush
+{
+    if($print_stdout)
+    {
+        print "Starting: " . join(" ", @command, @args) . "\n";
+    }
+    if($print_stderr)
+    {
+        print STDERR "Starting: " . join(" ", @command, @args) . "\n";
+    }
+
+    system(@command, @args);
+
+    if($print_stdout)
+    {
+        print "Finished: " . join(" ", @command, @args) . "\n";
+    }
+    if($print_stderr)
+    {
+        print STDERR "Finished: " . join(" ", @command, @args) . "\n";
+    }
+
+    @args = ();
+}
+
+sub usage
+{
+    print <<EOF;
+Usage: $0 <options> <command>
+   {-j | --parallel} <int>   Run this many executions in parallel.
+   -n                        Run exactly this many commands in each execution.
+   -v                        Print commands to STDOUT as they're started.
+   -V                        Print commands to STDERR as they're started.
+EOF
+}
