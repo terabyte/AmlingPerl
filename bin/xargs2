@@ -82,27 +82,32 @@ sub check_flush
 
 sub force_flush
 {
-    if($print_stdout)
-    {
-        print "Starting: " . join(" ", @command, @args) . "\n";
-    }
-    if($print_stderr)
-    {
-        print STDERR "Starting: " . join(" ", @command, @args) . "\n";
-    }
-
-    system(@command, @args);
-
-    if($print_stdout)
-    {
-        print "Finished: " . join(" ", @command, @args) . "\n";
-    }
-    if($print_stderr)
-    {
-        print STDERR "Finished: " . join(" ", @command, @args) . "\n";
-    }
-
+    do_run([@args]);
     @args = ();
+}
+
+sub do_run
+{
+    my $args = shift;
+    if($print_stdout)
+    {
+        print "Starting: " . join(" ", @command, @$args) . "\n";
+    }
+    if($print_stderr)
+    {
+        print STDERR "Starting: " . join(" ", @command, @$args) . "\n";
+    }
+
+    system(@command, @$args);
+
+    if($print_stdout)
+    {
+        print "Finished: " . join(" ", @command, @$args) . "\n";
+    }
+    if($print_stderr)
+    {
+        print STDERR "Finished: " . join(" ", @command, @$args) . "\n";
+    }
 }
 
 sub usage
