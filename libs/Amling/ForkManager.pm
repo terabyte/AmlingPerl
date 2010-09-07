@@ -176,6 +176,7 @@ sub wait_subset
     my $whiches = shift;
     my $timeout = shift;
     my $start_time = int(time() * 1000);
+    my $pumped = 0;
 
     while(1)
     {
@@ -208,10 +209,19 @@ sub wait_subset
             my $left = $start_time + $timeout - $now_time;
             if($left <= 0)
             {
-                last;
+                if($pumped)
+                {
+                    last;
+                }
+                else
+                {
+                    # we're out of time already but we haven't pumped
+                    # even once, pump only what's already ready.
+                    $left = 0;
+                }
             }
         }
-        select($rsout, $ws, $es, $timeout);
+        select($rsout, $ws, $es, $left);
 
         for(my $i = 0; $i < @{$this->{'IN_FLIGHT'}}; ++$i)
         {
@@ -247,6 +257,8 @@ sub wait_subset
         $this->{'IN_FLIGHT'} = [grep { defined($_) } @{$this->{'IN_FLIGHT'}}];
 
         $this->_maybe_spawn();
+
+        $pumped = 1;
     }
 
     return [map { $this->{'RESULTS'}->{$_} } @$whiches];
